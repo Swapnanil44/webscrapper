@@ -1,7 +1,21 @@
-import { getImagesFromHTML } from "./crawl";
+import { crawlPage, getHTML } from "./crawl";
 
-const inputURL = "https://blog.boot.dev";
-const inputBody = `<html><body><img src="/logo.png" alt="Logo"></body></html>`;
+async function main() {
+  if (process.argv.length < 3) {
+    console.log("no website provided");
+    process.exit(1);
+  }
+  if (process.argv.length > 3) {
+    console.log("too many arguments provided");
+    process.exit(1);
+  }
+  const baseURL = process.argv[2];
+  // await getHTML(baseURL);
+  // console.log(`starting crawl of: ${baseURL}...`);
+  const pages = await crawlPage(baseURL);
+  console.log(pages);
+  
+  process.exit(0);
+}
 
-const actual = getImagesFromHTML(inputBody, inputURL);
-console.log(actual);
+main();
