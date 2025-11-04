@@ -1,19 +1,35 @@
-import { crawlPage, getHTML } from "./crawl";
+import { crawlPage, crawlSiteAsync, getHTML } from "./crawl";
 
 async function main() {
-  if (process.argv.length < 3) {
-    console.log("no website provided");
+  if (process.argv.length < 5) {
+    console.log("Usage: npm run start <baseURL> <maxConcurrency> <maxPages>");
     process.exit(1);
   }
-  if (process.argv.length > 3) {
-    console.log("too many arguments provided");
+  if (process.argv.length > 5) {
+    console.log("Usage: npm run start <baseURL> <maxConcurrency> <maxPages>");
     process.exit(1);
   }
   const baseURL = process.argv[2];
-  // await getHTML(baseURL);
-  // console.log(`starting crawl of: ${baseURL}...`);
-  const pages = await crawlPage(baseURL);
-  console.log(pages);
+  const maxConcurrency = Number(process.argv[3]);
+  const maxPages = Number(process.argv[4]);
+
+  if (!Number.isFinite(maxConcurrency) || maxConcurrency <= 0) {
+    console.log("invalid maxConcurrency");
+    process.exit(1);
+  }
+  if (!Number.isFinite(maxPages) || maxPages <= 0) {
+    console.log("invalid maxPages");
+    process.exit(1);
+  }
+
+
+  console.log(
+    `starting crawl of: ${baseURL} (concurrency=${maxConcurrency}, maxPages=${maxPages})...`,
+  );
+
+  await crawlSiteAsync(baseURL, maxConcurrency, maxPages);
+
+  // console.log(pages);
   
   process.exit(0);
 }
