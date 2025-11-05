@@ -41,8 +41,8 @@ This is a robust, command-line web crawler built with TypeScript and Node.js. It
 1.  Clone the repository:
 
     ```bash
-    git clone <your-repository-url>
-    cd <repository-name>
+    git clone https://github.com/Swapnanil44/webscrapper.git
+    cd webscrapper
     ```
 
 2.  Install dependencies:
@@ -110,4 +110,5 @@ This file can be opened in any spreadsheet program (like Excel, Google Sheets, o
       * `getH1FromHTML`, `getFirstParagraphFromHTML`, etc.: Helper functions that perform specific parsing tasks on a `JSDOM` object.
       * **`normalizeURL`**: A utility function that cleans and standardizes URLs to ensure `https://example.com/` and `https://example.com` are treated as identical.
   * `report.ts`: Contains the `writeCSVReport` function. This function takes the final `pages` object from the crawler, formats it into a CSV string (handling quotes and commas), and writes it to disk.
+
   * `type.ts`: Defines shared TypeScript interfaces, primarily `ExtractedPageData`.
