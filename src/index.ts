@@ -1,4 +1,6 @@
-import { crawlPage, crawlSiteAsync, getHTML } from "./crawl";
+import { crawlSiteAsync } from "./crawl";
+import { writeCSVReport } from "./report";
+import { ExtractedPageData } from "./type";
 
 async function main() {
   if (process.argv.length < 5) {
@@ -27,11 +29,21 @@ async function main() {
     `starting crawl of: ${baseURL} (concurrency=${maxConcurrency}, maxPages=${maxPages})...`,
   );
 
-  await crawlSiteAsync(baseURL, maxConcurrency, maxPages);
+  try {
+    const pageData: Record<string, ExtractedPageData> = await crawlSiteAsync(
+      baseURL,
+      maxConcurrency,
+      maxPages
+    );
 
-  // console.log(pages);
-  
-  process.exit(0);
+    console.log(" crawling complete.");
+
+    writeCSVReport(pageData, "report.csv");
+
+  } catch (error) {
+    console.error("Crawl failed:", error);
+    process.exit(1);
+  }
 }
 
 main();

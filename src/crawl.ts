@@ -190,14 +190,13 @@ export async function crawlPage(
 
 class ConcurrentCrawler {
   private baseURL: string;
-  private pages: Record<string, number>;
+  private pages: Record<string, ExtractedPageData>;
   private limit: <T>(fn: () => Promise<T>) => Promise<T>;
   private maxPages: number;
   private shouldStop: boolean = false;
   private allTasks = new Set<Promise<void>>();
   private abortController = new AbortController();
 
-  private visited = new Set<string>();
 
   constructor(baseURL: string, maxConcurrency: number = 5, maxPages: number = 100) {
     this.baseURL = baseURL;
@@ -206,30 +205,30 @@ class ConcurrentCrawler {
     this.maxPages = Math.max(1, maxPages);
   }
 
-  private addPageVisit(normalizedURL: string): boolean {
-    if (this.shouldStop) {
-      return false;
-    }
-    if (this.pages[normalizedURL]) {
-      this.pages[normalizedURL]++;
-    } else {
-      this.pages[normalizedURL] = 1;
-    }
-    if (this.visited.has(normalizedURL)) {
-      return false;
-    }
+  // private addPageVisit(normalizedURL: string): boolean {
+  //   if (this.shouldStop) {
+  //     return false;
+  //   }
+  //   if (this.pages[normalizedURL]) {
+  //     this.pages[normalizedURL]++;
+  //   } else {
+  //     this.pages[normalizedURL] = 1;
+  //   }
+  //   if (this.visited.has(normalizedURL)) {
+  //     return false;
+  //   }
 
-    if (this.visited.size >= this.maxPages) {
-      this.shouldStop = true;
-      console.log("Reached maximum number of pages to crawl.");
-      this.abortController.abort();
-      return false;
-    }
+  //   if (this.visited.size >= this.maxPages) {
+  //     this.shouldStop = true;
+  //     console.log("Reached maximum number of pages to crawl.");
+  //     this.abortController.abort();
+  //     return false;
+  //   }
 
-    this.visited.add(normalizedURL);
-    return true;
+  //   this.visited.add(normalizedURL);
+  //   return true;
     
-  }
+  // }
 
   private async getHTML(currentURL: string): Promise<string> {
     const { signal } = this.abortController;
@@ -273,11 +272,26 @@ class ConcurrentCrawler {
     }
 
     const normalizedCurrentURL = normalizeURL(currentURL);
-    const isNewPage = this.addPageVisit(normalizedCurrentURL);
+    if (this.pages[normalizedCurrentURL]) {
+      return; // Already visited or currently being processed
+    }
 
-    if (!isNewPage) {
+    if (Object.keys(this.pages).length >= this.maxPages) {
+      if (!this.shouldStop) { // Only log and abort once
+        this.shouldStop = true;
+        console.log("Reached maximum number of pages to crawl.");
+        this.abortController.abort();
+      }
       return;
     }
+
+    this.pages[normalizedCurrentURL] = {
+      url: currentURL,
+      h1: "",
+      first_paragraph: "",
+      outgoing_links: [],
+      image_urls: [],
+    };
 
     console.log(`crawling ${currentURL}`);
 
@@ -291,7 +305,10 @@ class ConcurrentCrawler {
 
     if (this.shouldStop) return;
 
-    const nextURLs = getURLsFromHTML(htmlBody, this.baseURL);
+    const extractedData = extractPageData(htmlBody, currentURL);
+    this.pages[normalizedCurrentURL] = extractedData;
+
+    const nextURLs = extractedData.outgoing_links;
 
     const crawlPromises: Promise<void>[] = [];
     for (const nextURL of nextURLs) {
